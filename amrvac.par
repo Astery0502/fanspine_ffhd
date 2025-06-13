@@ -1,0 +1,118 @@
+ &filelist
+        base_filename='data/fs_ffhd'
+        saveprim=.true.
+        autoconvert=F
+        convert_type='vtuBCCmpi'
+        nwauxio=2
+ /
+        base_filename='/scratch/leuven/377/vsc37715/fs_ffhd/fs_ffhd'
+
+ &savelist
+        itsave(1,1)=0
+        itsave(1,2)=0
+        dtsave_log=0.2d0
+        dtsave_dat=25.d0
+ /
+
+ &stoplist
+        dtmin=1.d-7
+        time_max=500.d0
+ /
+
+ &methodlist
+        !tvdlf_modify=2
+        time_stepper='threestep'
+        flux_scheme=20*'hll'
+        limiter=20*'vanleer'
+        check_small_values=.false.
+        fix_small_values=.true.
+        small_values_method='replace'
+        small_pressure=0.1d0
+        small_density=0.05d0
+ /
+        tvdlfeps_min=0.0
+        tvdlfeps_grad=1.0
+
+ &boundlist
+        typeboundary_min1 = 3*'cont'
+        typeboundary_max1 = 3*'cont'
+        typeboundary_min2 = 3*'cont'
+        typeboundary_max2 = 3*'cont'
+        typeboundary_min3 = 3*'special'
+        typeboundary_max3 = 3*'special'
+ /
+
+ &meshlist
+        iprob=2
+        refine_max_level=3
+        block_nx1=10
+        block_nx2=10
+        block_nx3=10
+        domain_nx1=80
+        domain_nx2=80
+        domain_nx3=60
+        xprobmin1=-12.d0
+        xprobmax1=8.d0
+        xprobmin2=-10d0
+        xprobmax2=10d0
+        xprobmin3=0.d0
+        xprobmax3=15.d0
+ /
+
+ &paramlist
+        typecourant='maxsum'
+        courantpar=0.8d0
+        slowsteps=10
+ /
+
+ &ffhd_list
+        ffhd_thermal_conduction=F
+        ffhd_radiative_cooling=T
+        ffhd_gravity=T
+        B0field=.true.
+        ffhd_trac=T
+        ffhd_trac_type=1
+ /
+        ffhd_hypertc=T
+        ffhd_ionization=F
+        ffhd_Btot=T
+        ffhd_leng=T
+
+ &tc_list
+        tc_saturate=.false.
+ /
+
+ &rc_list
+        ncool=10000
+        coolcurve='Colgan_DM'
+        coolmethod='exact'
+        Tfix=.true.
+        tlow=0.006d0
+        rad_cut=.true.
+        rad_cut_hgt=0.5d0
+        rad_cut_dey=0.2d0
+ /
+
+ &usr_list
+        a0=2.25d0
+
+        zh=0.9d0
+        lQ=2.5d-2
+        lambdah=0.4d0
+        tstop=450.d0
+        asym=1.0d0
+        F1=0.8d0
+
+        sigma=0.667d0
+        Qalfa=2.5d0
+        Qbeta=-1.d0
+        Qgama=-0.5d0
+        bQ0=5.d-5
+
+        dh = 4.4d0
+        Bh = 8.d0
+        dv = 1.d0
+        Bv = 25.d0
+        xv = -5.d0
+        ffhd_Btot=T
+ /
