@@ -1,0 +1,5 @@
+data/*
+*
+!.gitignore
+!mod_usr.t
+!amrvac.par

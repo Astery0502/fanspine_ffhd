@@ -30,49 +30,50 @@
         small_pressure=0.1d0
         small_density=0.05d0
  /
+
         tvdlfeps_min=0.0
         tvdlfeps_grad=1.0
 
  &boundlist
-        typeboundary_min1 = 3*'cont'
-        typeboundary_max1 = 3*'cont'
-        typeboundary_min2 = 3*'cont'
-        typeboundary_max2 = 3*'cont'
-        typeboundary_min3 = 3*'special'
-        typeboundary_max3 = 3*'special'
+        typeboundary_min1 = 4*'cont'
+        typeboundary_max1 = 4*'cont'
+        typeboundary_min2 = 4*'cont'
+        typeboundary_max2 = 4*'cont'
+        typeboundary_min3 = 4*'special'
+        typeboundary_max3 = 4*'special'
  /
 
  &meshlist
         iprob=2
-        refine_max_level=3
+        refine_max_level=4
         block_nx1=10
         block_nx2=10
         block_nx3=10
-        domain_nx1=80
-        domain_nx2=80
-        domain_nx3=60
-        xprobmin1=-12.d0
-        xprobmax1=8.d0
-        xprobmin2=-10d0
-        xprobmax2=10d0
+        domain_nx1=40
+        domain_nx2=40
+        domain_nx3=40
+        xprobmin1=-20.d0
+        xprobmax1=20.d0
+        xprobmin2=-20d0
+        xprobmax2=20.d0
         xprobmin3=0.d0
-        xprobmax3=15.d0
+        xprobmax3=20.d0
  /
 
  &paramlist
         typecourant='maxsum'
         courantpar=0.8d0
-        slowsteps=10
+        slowsteps=100000
  /
 
  &ffhd_list
-        ffhd_thermal_conduction=F
+        ffhd_hyperbolic_thermal_conduction=T
         ffhd_radiative_cooling=T
         ffhd_gravity=T
         B0field=.true.
+ /
         ffhd_trac=T
         ffhd_trac_type=1
- /
         ffhd_hypertc=T
         ffhd_ionization=F
         ffhd_Btot=T
@@ -109,10 +110,10 @@
         Qgama=-0.5d0
         bQ0=5.d-5
 
-        dh = 4.4d0
+        dh = 10.d0
         Bh = 8.d0
-        dv = 1.d0
+        dv = 1.7d0
         Bv = 25.d0
-        xv = -5.d0
+        xv = -7.d0
         ffhd_Btot=T
  /
