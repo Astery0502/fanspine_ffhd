@@ -307,8 +307,8 @@ contains
     al=two*asym/(1.0+asym)
     ar=two*1.0/(1.0+asym)
     if(rad-zh+z_cir<0) call mpistop("error in getlQ")
-    xr=sqrt(rad**2-(zh-z_cir)**2)
-    xl=-xr
+    xr=-2.9
+    xl=-7.5
     yr=zero
     yl=zero
     sigmax=a0*sigma
@@ -671,7 +671,7 @@ contains
 
     select case(refine_max_level)
     case(1,2)
-      if(any(abs(x(ixO^S,3)) .lt. 0.2d0)) then
+      if(any(abs(x(ixO^S,3)) .lt. 0.6d0)) then
         refine=1
         coarsen=-1
       end if
@@ -679,7 +679,7 @@ contains
       if(level .ge. 2) then
         refine=-1
       endif
-      if(any(abs(x(ixO^S,3)) .lt. 0.2d0)) then
+      if(any(abs(x(ixO^S,3)) .lt. 0.6d0)) then
         refine=1
         coarsen=-1
       end if
@@ -690,7 +690,7 @@ contains
       if(level .eq. 4) then
         coarsen=1
       endif
-      if(any(abs(x(ixO^S,3)) .lt. 0.2d0)) then
+      if(any(abs(x(ixO^S,3)) .lt. 0.6d0)) then
         refine=1
         coarsen=-1
       end if
@@ -701,7 +701,7 @@ contains
       if(level .ge. 3) then
         coarsen=1
       endif
-      if(any(abs(x(ixO^S,3)) .lt. 0.2d0)) then
+      if(any(abs(x(ixO^S,3)) .lt. 0.6d0)) then
         refine=1
         coarsen=-1
       end if
