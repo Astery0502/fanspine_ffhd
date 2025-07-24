@@ -6,7 +6,7 @@
         nwauxio=0
         slice_type='dat'
  /
-        base_filename='/scratch/leuven/377/vsc37715/fs_ffhd/fs_ffhd'
+        base_filename='/scratch/leuven/377/vsc37715/fs_ffhd/output/fs_ffhd'
 
  &savelist
         itsave(1,1)=0
@@ -15,12 +15,12 @@
         dtsave_dat=25.d0
         ! slice save 
         itsave(1,3)=0
-        dtsave_slice=0.2d0
+        dtsave_slice=1.d-2
         nslices=3
         slicedir(1)=2
         slicecoord(1)=0.d0
         slicedir(2)=3
-        slicecoord(2)=0.8d0 ! same as zh in usr_list
+        slicecoord(2)=0.0d0 ! same as zh in usr_list
         slicedir(3)=1
         slicecoord(3)=-5.d0 ! same as xv in usr_list
  /
@@ -55,14 +55,14 @@
  /
 
  &meshlist
-        iprob=1
+        iprob=3
         refine_max_level=4
-        block_nx1=16
-        block_nx2=16
-        block_nx3=16
-        domain_nx1=80
-        domain_nx2=48
-        domain_nx3=48
+        block_nx1=12
+        block_nx2=12
+        block_nx3=12
+        domain_nx1=60
+        domain_nx2=36
+        domain_nx3=36
         xprobmin1=-12.d0
         xprobmax1=8.d0
         xprobmin2=-6d0
@@ -74,7 +74,7 @@
  &paramlist
         typecourant='maxsum'
         courantpar=0.8d0
-        slowsteps=100000
+        slowsteps=10000
  /
 
  &ffhd_list
@@ -109,8 +109,8 @@
         sigma=1.d0
         a0=0.5d0 ! sigmax for the bottom heat source size
 
-        zh=0.8d0 ! height of the bottom heat zline
-        lQ=2.5d-2
+        zh=0.6d0 ! height of the bottom heat zline
+        lQ=2.5d-1
         lambdah=0.4d0
         tstop=450.d0
         asym=1.0d0
