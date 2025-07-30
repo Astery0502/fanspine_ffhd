@@ -3,3 +3,5 @@ data/*
 !.gitignore
 !mod_usr.t
 !amrvac.par
+!qsl/
+!fs2d/
