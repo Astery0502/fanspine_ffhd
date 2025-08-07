@@ -22,13 +22,19 @@ module mod_usr
   double precision :: dh,Bh,dv,Bv,xv,cv,ch
   integer :: Btot_
   logical :: ffhd_Btot
+
+  !> parameters for special amr over specific points
+  character(len=std_len) :: csvfile
+  integer :: npoints=0
+  double precision, allocatable :: pos(:,:)
 contains
 
  subroutine usr_params_read(files)
     character(len=*), intent(in) :: files(:)
     integer                      :: n
 
-    namelist /usr_list/ a0,Qbeta,Qalfa,Qgama,bQ0,tstop,zh,lQ,lambdah,sigma,asym,F1,dh,Bh,dv,Bv,xv,ffhd_Btot
+    namelist /usr_list/ a0,Qbeta,Qalfa,Qgama,bQ0,tstop,zh,lQ,lambdah,sigma,asym,F1,&
+                        dh,Bh,dv,Bv,xv,ffhd_Btot,csvfile,npoints
     do n = 1, size(files)
        open(unitpar, file=trim(files(n)), status="old")
        read(unitpar, usr_list, end=111)
@@ -105,6 +111,12 @@ contains
     ! for fan-spine field use in wyper2016a_field
     cv = (Bv*dv**3.d0)*half
     ch = (Bh*dh**3.d0)*half
+
+    ! initialize possible points for special amr
+    if (npoints > 0) then
+      allocate(pos(3, npoints))
+      call read_csv(npoints, pos, csvfile)
+    end if
   end subroutine initglobaldata_usr
 
   subroutine inithdstatic
@@ -739,53 +751,35 @@ contains
     integer, intent(inout) :: refine,coarsen
 
     double precision :: r1(ixI^S)
-    
-    ! r1(ixO^S)=sqrt(x(ixO^S,1)**2+(x(ixO^S,3)+d_cha0)**2)
+    integer :: i
 
-    select case(refine_max_level)
-    case(1,2)
-      if(any(abs(x(ixO^S,3)) .lt. 0.6d0)) then
-        refine=1
-        coarsen=-1
-      end if
-    case(3)
-      if(level .ge. 2) then
-        refine=-1
-      endif
-      if(any(abs(x(ixO^S,3)) .lt. 0.6d0)) then
-        refine=1
-        coarsen=-1
-      end if
-    case(4)
-      if(level .ge. 2) then
-        refine=-1
-      endif
-      if(level .eq. 4) then
-        coarsen=1
-      endif
-      if(any(abs(x(ixO^S,3)) .lt. 0.6d0)) then
-        refine=1
-        coarsen=-1
-      end if
-    case(5)
+    if (npoints > 0) then
+      do i=1,npoints
+        if (pos(1,i) >= minval(x(ixO^S,1)) .and. pos(1,i) <= maxval(x(ixO^S,1)) .and. &
+            pos(2,i) >= minval(x(ixO^S,2)) .and. pos(2,i) <= maxval(x(ixO^S,2)) .and. &
+            pos(3,i) >= minval(x(ixO^S,3)) .and. pos(3,i) <= maxval(x(ixO^S,3))) then
+          refine=1
+          coarsen=-1
+          exit
+        else 
+          refine=-1
+          coarsen=-1
+        end if
+      end do
+    else 
       if(level .ge. 2) then
         refine=-1
       endif
       if(level .ge. 3) then
         coarsen=1
       endif
-      if(any(abs(x(ixO^S,3)) .lt. 0.6d0)) then
-        refine=1
-        coarsen=-1
-      end if
-    case default
-      call mpistop("refine_max_level too high, not defined")
-    end select
+    end if
 
-    ! if(any(abs(x(ixO^S,2)) .lt. a0 .and. abs(r1(ixO^S)-rad) .lt. a0)) then
-    !   refine=1
-    !   coarsen=-1
-    ! endif
+    if(any(abs(x(ixO^S,3)) .lt. 0.4)) then
+      refine=1
+      coarsen=-1
+    end if
+
   end subroutine special_refine_grid
 
   subroutine set_output_vars(ixI^L,ixO^L,qt,w,x)
@@ -823,5 +817,19 @@ contains
     ! endif
     w(ixO^S,i_Te)=pth(ixO^S)/w(ixO^S,rho_)
   end subroutine set_output_vars
+
+  subroutine read_csv(npoints, pos, ifile)
+    character(len=std_len), intent(in) :: ifile
+    integer, intent(in) :: npoints
+    double precision, intent(out) :: pos(3, npoints)
+    integer :: iunit, i, ierr
+    character(len=std_len) :: line
+    double precision :: x, y, z
+
+    iunit = 10
+    open(unit=iunit, file=ifile, status='old', action='read')
+    read(iunit, *, end=100) pos(:,:)
+    100 close(iunit)
+  end subroutine read_csv
 
 end module mod_usr

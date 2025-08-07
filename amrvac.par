@@ -27,7 +27,7 @@
 
  &stoplist
         dtmin=1.d-7
-        time_max=500.d0
+        time_max=0.d0
  /
 
  &methodlist
@@ -127,4 +127,7 @@
         Bv = 25.d0
         xv = -5.d0
         ffhd_Btot=T
+
+        csvfile='data/line_points.csv'
+        npoints=11635
  /
