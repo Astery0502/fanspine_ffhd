@@ -74,7 +74,7 @@
 
  &rc_list
         ncool=10000
-        coolcurve='JCcorona'
+        coolcurve='Colgan_DM'
         coolmethod='exact'
         Tfix=.true.
         tlow=0.006d0
@@ -92,7 +92,7 @@
         tstop=450.d0
         lQ=2.5d-2
 
-        htra=0.4d0 ! height of transition top
+        htra=0.3d0 ! height of transition top
         lambdah=0.4d0 ! gaussian profile width at vertical direction
         asym=1.0d0
         xr=-3.0d0

@@ -358,7 +358,7 @@ contains
     integer, intent(inout) :: refine,coarsen
 
     select case(refine_max_level)
-    case(3)
+    case(4)
       if(level .ge. 2) then
         refine=-1
       endif
@@ -366,8 +366,8 @@ contains
         refine=1
         coarsen=-1
       end if
-    case(4)
-      if(level .ge. 2) then
+    case(5)
+      if(level .ge. 3) then
         refine=-1
       endif
       if(level .eq. 4) then
