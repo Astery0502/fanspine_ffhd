@@ -7,7 +7,7 @@ module mod_usr
   double precision, allocatable :: pa(:),ra(:)
   integer, parameter :: jmax=10000
 
-  double precision :: lQ,lQ0,lambdah,sigma,asym
+  double precision :: lQ,lQ0,sigma,asym
 
   double precision :: htra, xl, xr
 
@@ -27,7 +27,7 @@ contains
 
     namelist /usr_list/ Qalfa,Qgama,bQ0,& !> for background heating
                         trelax,tstop,lQ,& !> for localized heating (temporal profile)
-                        htra,lambdah,asym,xr,xl,sigma,& !> for localized heating (spaitial profile)
+                        htra,asym,xr,xl,sigma,& !> for localized heating (spaitial profile)
                         dh,Bh,dv,Bv,xv !> for fan-spine field in wyper2016
     do n = 1, size(files)
        open(unitpar, file=trim(files(n)), status="old")
@@ -266,19 +266,18 @@ contains
     double precision, intent(in) :: qt, x(ixI^S,1:ndim), w(ixI^S,1:nw)
 
     double precision :: lQgrid(ixI^S),factors(ixI^S),tr
-    double precision :: tramp
-    double precision :: heatx(100),heaty(100),theat
-    double precision :: r(200),theta(200),heatz(200),rd,thetad
-    integer :: tloc, i_tloc
-    double precision :: tres,xd,yd,zd,al,ar
+    double precision :: al,ar
+    double precision :: tramp, theat
+    double precision :: heatx_left(100),heaty_left(100),heatx_right(100),heaty_right(100)
+    integer :: tloc
+    double precision :: xd1,yd1,xd2,yd2,tres
 
-    factors=zero
     !> asymmetric footpoint local heating
     al=two*asym/(1.0+asym)
     ar=two*1.0/(1.0+asym)
 
     !> time profile for localized heating (relax->ramp->peak->ramp->relax; ramp is 500s)
-    tramp=500.d0/unit_time !< time for localized heating to increase from 0 to 1
+    tramp=500.d0/unit_time !< time for localized heating to increase from 0 to 1, about 6 ta
     theat=qt-trelax
     tr=zero
     if (theat .lt. zero) then
@@ -291,16 +290,73 @@ contains
       tr=(tstop-trelax-theat)/tramp
     endif
 
-    !> heating profile
-    where(x(ixO^S,ndim) .lt. htra)
-      lQgrid(ixO^S)=1.d0
-    elsewhere
-      lQgrid(ixO^S)=dexp(-(x(ixO^S,ndim)-htra)**2/lambdah**2)
-    endwhere
-    lQgrid(ixO^S) = lQ0*tr*lQgrid(ixO^S)
+    !> heating profile depending on random point at the separatrix layer
+    heatx_left = (/ &
+    -7.464633, -7.450113, -7.472507, -7.462049, -7.437082, -7.461177, -7.468804, -7.472507, -7.464633, -7.465919, &
+    -7.461177, -7.453475, -7.464633, -7.470363, -7.470363, -7.466514, -7.465569, -7.470269, -7.465569, -7.470075, &
+    -7.457613, -7.467940, -7.467389, -7.467389, -7.470363, -7.465569, -7.441896, -7.467940, -7.467940, -7.464633, &
+    -7.466514, -7.453475, -7.470075, -7.465919, -7.441896, -7.468849, -7.461177, -7.466514, -7.468849, -7.470075, &
+    -7.457613, -7.470269, -7.466514, -7.468804, -7.468804, -7.468804, -7.472507, -7.470269, -7.465919, -7.453475, &
+    -7.467389, -7.455415, -7.470269, -7.472507, -7.441896, -7.470363, -7.453723, -7.441896, -7.468804, -7.453475, &
+    -7.461177, -7.453475, -7.468804, -7.470075, -7.453723, -7.437082, -7.466514, -7.462049, -7.472507, -7.468804, &
+    -7.457613, -7.457613, -7.470269, -7.472507, -7.466514, -7.470269, -7.470363, -7.467940, -7.472507, -7.465569, &
+    -7.472507, -7.462049, -7.450113, -7.465919, -7.462049, -7.467940, -7.466514, -7.465919, -7.465569, -7.453723, &
+    -7.465569, -7.470269, -7.466237, -7.465569, -7.468849, -7.465919, -7.468849, -7.465569, -7.472507, -7.441896 /)
 
-    lQgrid(ixO^S) = lQgrid(ixO^S)*(dexp(-(x(ixO^S,1)-xr)**2/sigma**2)*ar+&
-                                   dexp(-(x(ixO^S,1)-xl)**2/sigma**2)*al)
+    heaty_left = (/ &
+    0.035742, 0.195737, 0.023934, 0.091613, 0.299468, 0.138087, 0.014741, 0.023934, 0.035742, 0.042336, &
+    0.138087, 0.213476, 0.035742, 0.025319, 0.025319, 0.015777, 0.032359, 0.059909, 0.032359, 0.034679, &
+    0.146637, 0.029906, 0.016739, 0.016739, 0.025319, 0.032359, 0.270388, 0.029906, 0.029906, 0.035742, &
+    0.015777, 0.213476, 0.034679, 0.042336, 0.270388, 0.049563, 0.138087, 0.015777, 0.049563, 0.034679, &
+    0.146637, 0.059909, 0.015777, 0.014741, 0.014741, 0.014741, 0.023934, 0.059909, 0.042336, 0.213476, &
+    0.016739, 0.139936, 0.059909, 0.023934, 0.270388, 0.025319, 0.162861, 0.270388, 0.014741, 0.213476, &
+    0.138087, 0.213476, 0.014741, 0.034679, 0.162861, 0.299468, 0.015777, 0.091613, 0.023934, 0.014741, &
+    0.146637, 0.146637, 0.059909, 0.023934, 0.015777, 0.059909, 0.025319, 0.029906, 0.023934, 0.032359, &
+    0.023934, 0.091613, 0.195737, 0.042336, 0.091613, 0.029906, 0.015777, 0.042336, 0.032359, 0.162861, &
+    0.032359, 0.059909, 0.088776, 0.032359, 0.049563, 0.042336, 0.049563, 0.032359, 0.023934, 0.270388 /)
+
+    heatx_right = (/ &
+    -2.925009, -2.987860, -2.951121, -2.951121, -2.925009, -2.921696, -2.925009, -2.970336, -2.912734, -2.964204, &
+    -2.912399, -2.925009, -2.925009, -2.913982, -2.925009, -2.970949, -2.914512, -2.976825, -2.928897, -2.964204, &
+    -2.925009, -2.925009, -2.940842, -2.917113, -2.911652, -2.925009, -2.925009, -2.921696, -2.918969, -2.925009, &
+    -2.912399, -2.933827, -2.925009, -2.925009, -2.964204, -2.940842, -2.948856, -2.976825, -2.925009, -2.918969, &
+    -2.925009, -2.925009, -2.925009, -2.912734, -2.925009, -2.949335, -2.925009, -2.915770, -2.941692, -2.949335, &
+    -2.949335, -2.925009, -2.925009, -2.925009, -2.928897, -2.913982, -2.925009, -2.917056, -2.925009, -2.925009, &
+    -2.970949, -2.925009, -2.923806, -2.909286, -2.912399, -2.925009, -2.917113, -2.918969, -2.914512, -2.951121, &
+    -2.923806, -2.917056, -2.912734, -2.925009, -2.925009, -2.933827, -2.949335, -2.925009, -2.910203, -2.925009, &
+    -2.964204, -2.912399, -2.950107, -2.917056, -2.915770, -2.911652, -2.951121, -2.970336, -2.923806, -2.951121, &
+    -2.964204, -2.933827, -2.928897, -2.921696, -2.915770, -2.976825, -2.933827, -2.925009, -2.917056, -2.949335 /)
+
+    heaty_right = (/ &
+    0.059409, 0.252597, 0.148177, 0.148177, 0.059409, 0.050034, 0.059409, 0.220226, 0.012594, 0.192700, &
+    0.012779, 0.059409, 0.059409, 0.022130, 0.059409, 0.207788, 0.035292, 0.227743, 0.084341, 0.192700, &
+    0.059409, 0.059409, 0.106762, 0.023678, 0.017364, 0.059409, 0.059409, 0.050034, 0.036767, 0.059409, &
+    0.012779, 0.095822, 0.059409, 0.059409, 0.192700, 0.106762, 0.139459, 0.227743, 0.059409, 0.036767, &
+    0.059409, 0.059409, 0.059409, 0.012594, 0.059409, 0.140586, 0.059409, 0.032204, 0.109909, 0.140586, &
+    0.140586, 0.059409, 0.059409, 0.059409, 0.084341, 0.022130, 0.059409, 0.028388, 0.059409, 0.059409, &
+    0.207788, 0.059409, 0.054089, 0.015998, 0.012779, 0.059409, 0.023678, 0.036767, 0.035292, 0.148177, &
+    0.054089, 0.028388, 0.012594, 0.059409, 0.059409, 0.095822, 0.140586, 0.059409, 0.017167, 0.059409, &
+    0.192700, 0.012779, 0.141574, 0.028388, 0.032204, 0.017364, 0.148177, 0.220226, 0.054089, 0.148177, &
+    0.192700, 0.095822, 0.084341, 0.050034, 0.032204, 0.227743, 0.095822, 0.059409, 0.028388, 0.140586 /)
+
+    factors(ixO^S) = one
+
+    if (theat > 0) then
+      tloc = floor(theat/(300.d0/unit_time)) ! about five minutes?
+      tres = (theat-300.d0/unit_time*dble(tloc))/(300.d0/unit_time)
+      xd1 = heatx_left(tloc+1)*(1.0-tres)+heatx_left(tloc+2)*tres
+      yd1 = heaty_left(tloc+1)*(1.0-tres)+heaty_left(tloc+2)*tres
+      xd2 = heatx_right(tloc+1)*(1.0-tres)+heatx_right(tloc+2)*tres
+      yd2 = heaty_right(tloc+1)*(1.0-tres)+heaty_right(tloc+2)*tres
+      factors(ixO^S) = dexp(-(x(ixO^S,1)-xd1)**2/sigma**2-(x(ixO^S,2)-yd1)**2/sigma**2)+&
+                      dexp(-(x(ixO^S,1)-xd2)**2/sigma**2-(x(ixO^S,2)-yd2)**2/sigma**2)
+    end if
+
+
+    lQgrid(ixO^S) = lQ0*tr*factors(ixO^S)
+
+    ! lQgrid(ixO^S) = lQgrid(ixO^S)*(dexp(-(x(ixO^S,1)-xr)**2/sigma**2)*ar+&
+    !                                dexp(-(x(ixO^S,1)-xl)**2/sigma**2)*al)
 
     ! if (ffhd_Btot) then
     !   lQgrid(ixO^S)=lQgrid(ixO^S)*(block%wextra(ixO^S,Btot_)/9.25d0)**2
@@ -357,29 +413,10 @@ contains
     double precision, dimension(ixI^S,1:ndim), intent(in) :: x
     integer, intent(inout) :: refine,coarsen
 
-    select case(refine_max_level)
-    case(4)
-      if(level .ge. 2) then
-        refine=-1
-      endif
-      if(any(abs(x(ixO^S,ndim)) .lt. htra)) then
-        refine=1
-        coarsen=-1
-      end if
-    case(5)
-      if(level .ge. 3) then
-        refine=-1
-      endif
-      if(level .eq. 4) then
-        coarsen=1
-      endif
-      if(any(abs(x(ixO^S,ndim)) .lt. htra)) then
-        refine=1
-        coarsen=-1
-      end if
-    case default
-      call mpistop("refine_max_level too high, not defined")
-    end select
+    if(any(abs(x(ixO^S,ndim)) .lt. htra)) then
+      refine=1
+      coarsen=-1
+    end if
 
   end subroutine special_refine_grid
 

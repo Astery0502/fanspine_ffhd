@@ -775,7 +775,7 @@ contains
       endif
     end if
 
-    if(any(abs(x(ixO^S,3)) .lt. 0.4)) then
+    if(any(abs(x(ixO^S,3)) .lt. 0.3)) then
       refine=1
       coarsen=-1
     end if

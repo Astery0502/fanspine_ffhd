@@ -17,7 +17,7 @@
 
  &stoplist
         dtmin=1.d-7
-        time_max=0.d0
+        time_max=250.d0
  /
 
  &methodlist
@@ -38,7 +38,7 @@
  /
 
  &meshlist
-        refine_max_level=3
+        refine_max_level=5
         block_nx1=20
         block_nx2=20
         domain_nx1=160
@@ -84,20 +84,20 @@
  /
 
  &usr_list
+        ! background heating
         Qalfa=2.5d0
         Qgama=-0.5d0
         bQ0=5.d-5
 
-        trelax=100.d0
-        tstop=450.d0
-        lQ=2.5d-2
+        trelax=50.d0
+        tstop=200.d0
+        lQ=5.d-2
 
         htra=0.3d0 ! height of transition top
-        lambdah=0.4d0 ! gaussian profile width at vertical direction
         asym=1.0d0
         xr=-3.0d0
         xl=-7.4d0
-        sigma=0.0036d0 ! local heating source size
+        sigma=0.005d0 ! local heating source size
 
         dh = 4.4d0
         Bh = 8.d0
