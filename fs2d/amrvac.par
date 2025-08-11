@@ -6,6 +6,7 @@
         nwauxio=0
         slice_type='dat'
  /
+        base_filename='/scratch/guoyang1/fs2d/fs2d'
         base_filename='/scratch/leuven/377/vsc37715/fs_ffhd/output/fs2d'
 
  &savelist
