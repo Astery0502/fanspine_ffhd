@@ -375,9 +375,9 @@ contains
       yd2 = heaty_right(tloc+1)*(1.0-tres)+heaty_right(tloc+2)*tres
       xd3 = heatx_center(tloc+1)*(1.0-tres)+heatx_center(tloc+2)*tres
       yd3 = heaty_center(tloc+1)*(1.0-tres)+heaty_center(tloc+2)*tres
-      factors(ixO^S) = dexp(-(x(ixO^S,1)-xd1)**2/sigma**2-(x(ixO^S,2)-yd1)**2/sigma**2)+&
-                      dexp(-(x(ixO^S,1)-xd2)**2/sigma**2-(x(ixO^S,2)-yd2)**2/sigma**2)
-                      ! dexp(-(x(ixO^S,1)-xd3)**2/sigma**2-(x(ixO^S,2)-yd3)**2/sigma**2)
+      ! factors(ixO^S) = dexp(-(x(ixO^S,1)-xd1)**2/sigma**2-(x(ixO^S,2)-yd1)**2/sigma**2)+&
+      !                 dexp(-(x(ixO^S,1)-xd2)**2/sigma**2-(x(ixO^S,2)-yd2)**2/sigma**2)
+      factors(ixO^S) = dexp(-(x(ixO^S,1)-xd3)**2/sigma**2-(x(ixO^S,2)-yd3)**2/sigma**2)
     end if
 
 
