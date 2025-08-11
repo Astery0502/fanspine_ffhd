@@ -366,7 +366,7 @@ contains
 
     factors(ixO^S) = one
 
-    if (theat > 0) then
+    if ((theat > 0) .and. (theat < tstop-trelax)) then
       tloc = floor(theat/(300.d0/unit_time)) ! about five minutes?
       tres = (theat-300.d0/unit_time*dble(tloc))/(300.d0/unit_time)
       xd1 = heatx_left(tloc+1)*(1.0-tres)+heatx_left(tloc+2)*tres
@@ -376,8 +376,8 @@ contains
       xd3 = heatx_center(tloc+1)*(1.0-tres)+heatx_center(tloc+2)*tres
       yd3 = heaty_center(tloc+1)*(1.0-tres)+heaty_center(tloc+2)*tres
       factors(ixO^S) = dexp(-(x(ixO^S,1)-xd1)**2/sigma**2-(x(ixO^S,2)-yd1)**2/sigma**2)+&
-                      dexp(-(x(ixO^S,1)-xd2)**2/sigma**2-(x(ixO^S,2)-yd2)**2/sigma**2)+&
-                      dexp(-(x(ixO^S,1)-xd3)**2/sigma**2-(x(ixO^S,2)-yd3)**2/sigma**2)
+                      dexp(-(x(ixO^S,1)-xd2)**2/sigma**2-(x(ixO^S,2)-yd2)**2/sigma**2)
+                      ! dexp(-(x(ixO^S,1)-xd3)**2/sigma**2-(x(ixO^S,2)-yd3)**2/sigma**2)
     end if
 
 

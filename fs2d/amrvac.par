@@ -17,7 +17,7 @@
 
  &stoplist
         dtmin=1.d-7
-        time_max=360.d0
+        time_max=300.d0
  /
 
  &methodlist
@@ -90,8 +90,8 @@
         bQ0=5.d-5
 
         trelax=50.d0
-        tstop=350.d0
-        lQ=5.d0
+        tstop=250.d0
+        lQ=5.d-2
 
         htra=0.3d0 ! height of transition top
         asym=1.0d0
