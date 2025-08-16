@@ -750,7 +750,6 @@ contains
     double precision, dimension(ixI^S,1:ndim), intent(in) :: x
     integer, intent(inout) :: refine,coarsen
 
-    double precision :: r1(ixI^S)
     integer :: i
 
     if (npoints > 0) then

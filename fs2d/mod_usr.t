@@ -14,11 +14,13 @@ module mod_usr
   !> parameters for background heating
   double precision :: bQ0,Qalfa,Qgama
   !> parameters for modified output
-  integer :: i_Te,i_b1,i_b2
+  integer :: i_Te,i_b1,i_b2,i_ciso
   !> parameters for fan-spine field in wyper2016
   double precision :: dh,Bh,dv,Bv,xv,cv,ch
   !> parameters for Btot as extra variable
   integer :: Btot_
+  !> parameters for analysis
+  logical :: write_analysis = .false.
 contains
 
  subroutine usr_params_read(files)
@@ -28,7 +30,9 @@ contains
     namelist /usr_list/ Qalfa,Qgama,bQ0,& !> for background heating
                         trelax,tstop,lQ,& !> for localized heating (temporal profile)
                         htra,asym,xr,xl,sigma,& !> for localized heating (spaitial profile)
-                        dh,Bh,dv,Bv,xv !> for fan-spine field in wyper2016
+                        dh,Bh,dv,Bv,xv,& !> for fan-spine field in wyper2016
+                        write_analysis !> whether to write down the cooling curve
+
     do n = 1, size(files)
        open(unitpar, file=trim(files(n)), status="old")
        read(unitpar, usr_list, end=111)
@@ -52,6 +56,7 @@ contains
     usr_set_B0          => specialset_B0
     usr_modify_output   => set_output_vars
 
+    usr_write_analysis  => special_analysis
 !    usr_process_global  => special_global
 !    usr_set_field_w     => special_field_w
     call usr_params_read(par_files)
@@ -62,6 +67,7 @@ contains
     i_b1 = var_set_extravar("b1", "b1")
     i_b2 = var_set_extravar("b2", "b2")
     i_Te = var_set_extravar("Te", "Te")
+    i_ciso = var_set_extravar("ciso", "ciso")
   end subroutine usr_init
 
   subroutine initglobaldata_usr()
@@ -364,7 +370,7 @@ contains
     0.040152, 0.203111, 0.040152, 0.129971, 0.013183, 0.043160, 0.040152, 0.040152, 0.125996, 0.040152, &
     0.017041, 0.258732, 0.110782, 0.040152, 0.028939, 0.040152, 0.227625, 0.282310, 0.282310, 0.043160 /)
 
-    factors(ixO^S) = one
+    factors(ixO^S) = zero
 
     if ((theat > 0) .and. (theat < tstop-trelax)) then
       tloc = floor(theat/(300.d0/unit_time)) ! about five minutes?
@@ -375,9 +381,9 @@ contains
       yd2 = heaty_right(tloc+1)*(1.0-tres)+heaty_right(tloc+2)*tres
       xd3 = heatx_center(tloc+1)*(1.0-tres)+heatx_center(tloc+2)*tres
       yd3 = heaty_center(tloc+1)*(1.0-tres)+heaty_center(tloc+2)*tres
-      ! factors(ixO^S) = dexp(-(x(ixO^S,1)-xd1)**2/sigma**2-(x(ixO^S,2)-yd1)**2/sigma**2)+&
-      !                 dexp(-(x(ixO^S,1)-xd2)**2/sigma**2-(x(ixO^S,2)-yd2)**2/sigma**2)
-      factors(ixO^S) = dexp(-(x(ixO^S,1)-xd3)**2/sigma**2-(x(ixO^S,2)-yd3)**2/sigma**2)
+      factors(ixO^S) = dexp(-(x(ixO^S,1)-xd1)**2/sigma**2-(x(ixO^S,2)-yd1)**2/sigma**2)+&
+                      dexp(-(x(ixO^S,1)-xd2)**2/sigma**2-(x(ixO^S,2)-yd2)**2/sigma**2)
+      factors(ixO^S) = factors(ixO^S)+dexp(-(x(ixO^S,1)-xd3)**2/sigma**2-(x(ixO^S,2)-yd3)**2/sigma**2)
     end if
 
 
@@ -450,6 +456,7 @@ contains
 
   subroutine set_output_vars(ixI^L,ixO^L,qt,w,x)
     use mod_global_parameters
+    use mod_radiative_cooling, only: findL, finddLdt
     ! use mod_ionization
 
     integer, intent(in)             :: ixI^L,ixO^L
@@ -457,12 +464,54 @@ contains
     double precision, intent(inout) :: w(ixI^S,nw)
     double precision :: wlocal(ixI^S,1:nw),pth(ixI^S)
 
+    double precision :: tpoint,dLdt,Lpoint,kappa
+    integer :: ix^D
+    
+    kappa=8.d-7*unit_temperature**3.5d0/unit_length/unit_density/unit_velocity**3
+
     w(ixO^S,i_b1)=block%B0(ixO^S,1,0)*block%wextra(ixO^S,Btot_)
     w(ixO^S,i_b2)=block%B0(ixO^S,2,0)*block%wextra(ixO^S,Btot_)
-
     wlocal(ixI^S,1:nw)=w(ixI^S,1:nw)
     call ffhd_get_pthermal(wlocal,x,ixI^L,ixI^L,pth)
     w(ixO^S,i_Te)=pth(ixO^S)/w(ixO^S,rho_)
+
+    if (ffhd_radiative_cooling) then
+      {do ix^DB=ixOmin^DB,ixOmax^DB\}
+      tpoint = w(ix^DB,i_Te)
+      call finddLdt(tpoint, dLdt, rc_fl)
+      call findL(tpoint, Lpoint, rc_fl)
+      w(ix^D,i_ciso)=w(ix^D,rho_)**2*(dLdt-Lpoint/w(ix^D,i_Te))/kappa
+      {end do\}
+    end if
+
   end subroutine set_output_vars
+
+  subroutine special_analysis()
+    use mod_global_parameters
+
+    integer :: iunit
+    character(len=80) :: filename
+    integer :: ncool
+    double precision, allocatable :: ciso1(:)
+
+    if (mype==0 .and. write_analysis) then
+
+      filename = 'data/ciso.bin'
+      iunit = 123
+
+      ncool = rc_fl%ncool
+      allocate(ciso1(ncool))
+      ciso1(1:ncool) = rc_fl%dLdtcool(1:ncool)-rc_fl%Lcool(1:ncool)/rc_fl%tcool(1:ncool)
+
+      open(newunit=iunit,file=trim(filename),form='unformatted',status='replace', &
+      access='stream', action='write')
+      write(iunit) ncool
+      write(iunit) rc_fl%tcool(1:ncool)
+      write(iunit) rc_fl%Lcool(1:ncool)
+      write(iunit) ciso1(1:ncool)
+      close(iunit)
+
+    end if
+  end subroutine special_analysis
 
 end module mod_usr

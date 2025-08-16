@@ -128,6 +128,6 @@
         xv = -5.d0
         ffhd_Btot=T
 
-        csvfile='data/line_points.csv'
-        npoints=11635
+        csvfile='/data/leuven/377/vsc37715/fs_ffhd/line_points.csv'
+        npoints=57845
  /
