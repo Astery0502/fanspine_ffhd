@@ -1,5 +1,5 @@
  &filelist
-        base_filename='data/fs2d'
+        base_filename='data/extres'
         saveprim=.true.
         autoconvert=f
         convert_type='vtuBCCmpi'
@@ -14,12 +14,12 @@
         itsave(1,2)=0
         itsave(1,5)=0
         dtsave_log=0.2d0
-        dtsave_dat=2.d0
+        dtsave_dat=1.d0
  /
 
  &stoplist
         dtmin=1.d-7
-        time_max=300.d0
+        time_max=50.d0
  /
 
  &methodlist
@@ -40,26 +40,27 @@
  /
 
  &meshlist
-        refine_max_level=5
+        refine_max_level=7
         block_nx1=20
         block_nx2=20
-        domain_nx1=160
+        domain_nx1=240
         domain_nx2=80
-        xprobmin1=-9.d0
-        xprobmax1=-1.d0
+        xprobmin1=-7.5d0
+        xprobmax1=-3d0
         xprobmin2=0.d0
-        xprobmax2=4.d0
+        xprobmax2=1.5d0
+        ditregrid=100000
  /
 
  &paramlist
         typecourant='maxsum'
         courantpar=0.8d0
-        slowsteps=1000
+        slowsteps=100
  /
 
  &ffhd_list
         ffhd_hyperbolic_thermal_conduction=T
-        ffhd_radiative_cooling=T
+        ffhd_radiative_cooling=F
         ffhd_gravity=T
         B0field=.true.
  /
@@ -82,16 +83,16 @@
         tlow=0.006d0
         rad_cut=.true.
         rad_cut_hgt=0.5d0
-        rad_cut_dey=0.2d0
+        rad_cut_dey=0.1d0
  /
 
  &usr_list
         ! background heating
         Qalfa=2.5d0
         Qgama=-0.5d0
-        bQ0=5.d-5
+        bQ0=0.d0
 
-        trelax=50.d0
+        trelax=100.d0
         tstop=250.d0
         lQ=1.d-1
 
@@ -101,11 +102,16 @@
         xl=-7.4d0
         sigma=0.1d0 ! local heating source size
 
-        dh = 4.4d0
+        ! make the poles 1.0 lower
+        dh = 5.4d0
         Bh = 8.d0
-        dv = 1.d0
+        dv = 2.d0
         Bv = 25.d0
         xv = -5.d0
 
         write_analysis=f
+        !npoints=72680
+        npoints=0
+        csvfile='data/lines_points.csv'
+        !csvfile='/data/leuven/377/vsc37715/fs_ffhd/lines_points.csv'
  /

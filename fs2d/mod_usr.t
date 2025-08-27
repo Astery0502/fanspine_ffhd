@@ -21,6 +21,11 @@ module mod_usr
   integer :: Btot_
   !> parameters for analysis
   logical :: write_analysis = .false.
+  !> parameters for special amr over specific points
+  character(len=std_len) :: csvfile
+  integer :: npoints=0
+  double precision, allocatable :: pos(:,:)
+
 contains
 
  subroutine usr_params_read(files)
@@ -31,7 +36,9 @@ contains
                         trelax,tstop,lQ,& !> for localized heating (temporal profile)
                         htra,asym,xr,xl,sigma,& !> for localized heating (spaitial profile)
                         dh,Bh,dv,Bv,xv,& !> for fan-spine field in wyper2016
-                        write_analysis !> whether to write down the cooling curve
+                        write_analysis,& !> whether to write down the cooling curve
+                        npoints,csvfile !> number of points for refinement
+
 
     do n = 1, size(files)
        open(unitpar, file=trim(files(n)), status="old")
@@ -57,8 +64,8 @@ contains
     usr_modify_output   => set_output_vars
 
     usr_write_analysis  => special_analysis
-!    usr_process_global  => special_global
-!    usr_set_field_w     => special_field_w
+    ! usr_process_global  => special_global
+    ! usr_set_field_w     => special_field_w
     call usr_params_read(par_files)
     call ffhd_activate()
 
@@ -80,9 +87,15 @@ contains
     lQ0=lQ/heatunit
 
     ! for fan-spine field use in wyper2016a_field
-    cv = (Bv*dv**3.d0)*half
-    ch = (Bh*dh**3.d0)*half
+    cv = (Bv*(dv-1.d0)**3.d0)*half
+    ch = (Bh*(dh-1.d0)**3.d0)*half
     call inithdstatic
+
+    ! initialize possible points for special amr
+    if (npoints > 0) then
+      allocate(pos(3, npoints))
+      call read_csv(npoints, pos, csvfile)
+    end if
   end subroutine initglobaldata_usr
 
   subroutine inithdstatic
@@ -174,13 +187,18 @@ contains
     double precision :: Q(ixI^S),Qp(ixI^S)
     integer :: ix^D,ixOs^L,ixC^L,hxC^L,jxO^L
 
+    double precision :: res
+    integer :: na
+
     select case(iB)
     case(3)
       w(ixO^S,mom(1))=-w(ixOmin1:ixOmax1,ixOmax2+nghostcells:ixOmax2+1:-1,mom(1))&
                    /w(ixOmin1:ixOmax1,ixOmax2+nghostcells:ixOmax2+1:-1,rho_)
       do ix2=ixOmin2,ixOmax2
-        w(ixOmin1:ixOmax1,ix2,rho_)=rbc(ix2)
-        w(ixOmin1:ixOmax1,ix2,p_)=pbc(ix2)
+        na=floor((x(ixOmin1,ix2,ndim)-xprobmin2+gzone)/dya+0.5d0)
+        res=x(ixOmin1,ix2,ndim)-xprobmin2+gzone-(dble(na)-0.5d0)*dya
+        w(ixOmin1:ixOmax1,ix2,rho_)=ra(na)+(one-cos(dpi*res/dya))/two*(ra(na+1)-ra(na))
+        w(ixOmin1:ixOmax1,ix2,p_)=pa(na)+(one-cos(dpi*res/dya))/two*(pa(na+1)-pa(na))
         if(ffhd_hyperbolic_thermal_conduction) w(ix2^%2ixO^S,q_)=zero
       enddo
       call ffhd_to_conserved(ixI^L,ixO^L,w,x)
@@ -236,34 +254,45 @@ contains
 
     double precision :: lQgrid(ixI^S),bQgrid(ixI^S)
 
-    call getbQ(bQgrid,ixI^L,ixO^L,qtC,wCT,x)
+    call getbQ(bQgrid,ixI^L,ixO^L,qdt,qtC,wCT,x)
     w(ixO^S,e_)=w(ixO^S,e_)+qdt*bQgrid(ixO^S)
     call getlQ(lQgrid,ixI^L,ixO^L,qt,wCT,x)
     w(ixO^S,e_)=w(ixO^S,e_)+qdt*lQgrid(ixO^S)
   end subroutine special_source
 
-  subroutine getbQ(bQgrid,ixI^L,ixO^L,qt,w,x)
+  subroutine getbQ(bQgrid,ixI^L,ixO^L,qdt,qt,w,x)
     !> calculate background heating bQ
-    use mod_radiative_cooling
+    use mod_radiative_cooling, only: getvar_cooling_exact
+
     integer, intent(in) :: ixI^L,ixO^L
-    double precision, intent(in) :: qt,x(ixI^S,1:ndim),w(ixI^S,1:nw)
+    double precision, intent(in) :: qdt, qt,x(ixI^S,1:ndim),w(ixI^S,1:nw)
     double precision, intent(out) :: bQgrid(ixI^S)
     double precision :: bQ1,bQ2,lambda
 
-    bQ1=max((-0.04d0*qt+3.d0)*1.d-4,1.d-4)/heatunit
-    lambda=5.d0
-    bQgrid(ixO^S)=bQ1*dexp(-x(ixO^S,ndim)/lambda)
-    !if(ffhd_Btot) then
-    !  bQ1=1.d-3/heatunit
-    !  bQ2=3.d-6/heatunit
-    !  bQgrid(ixO^S)=bQ0*block%wextra(ixO^S,Btot_)**Qalfa*w(ixO^S,rho_)**Qgama
-    !  where(bQgrid(ixO^S) .lt. bQ2)
-    !    bQgrid(ixO^S)=bQ2
-    !  !elsewhere(bQgrid(ixO^S) .gt. bQ1)
-    !  !  bQgrid(ixO^S)=bQ1
-    !  endwhere
-    !else
-    !endif
+    double precision :: winit(ixI^S,1:nw)
+    double precision :: height, res
+    integer :: na, ix^D
+
+    bQgrid(ixO^S)=bQ0*block%wextra(ixO^S,Btot_)**Qalfa*w(ixO^S,rho_)**Qgama
+
+    ! suppress initial cooling with heating for initial equivalence (only for slab uniform)
+    if (ffhd_radiative_cooling) then
+      winit(ixI^S,1:nw)=0.d0
+      {do ix^DB=ixOmin^DB,ixOmax^DB\}
+        na=floor((x(ix^D,ndim)-xprobmin2+gzone)/dya+0.5d0)
+        res=x(ix^D,ndim)-xprobmin2+gzone-(dble(na)-0.5d0)*dya
+        winit(ix^D,rho_)=ra(na)+(one-cos(dpi*res/dya))/two*(ra(na+1)-ra(na))
+        winit(ix^D,p_)  =(pa(na)+(one-cos(dpi*res/dya))/two*(pa(na+1)-pa(na)))/(ffhd_gamma-1)
+      {end do\}
+      ! do ix2=ixOmin2,ixOmax2
+      !   height=x(ixOmin1,ix2,ndim)
+      !   na=floor((height-xprobmin2+gzone)/dya+0.5d0)
+      !   res=height-xprobmin2+gzone-(dble(na)-0.5d0)*dya
+      !   winit(ixOmin1:ixOmax1,ix2,rho_)=ra(na)+(one-cos(dpi*res/dya))/two*(ra(na+1)-ra(na))
+      !   winit(ixOmin1:ixOmax1,ix2,p_)=(pa(na)+(one-cos(dpi*res/dya))/two*(pa(na+1)-pa(na)))/(ffhd_gamma-1)
+      ! end do 
+      call getvar_cooling_exact(qdt,ixI^L,ixO^L,winit,winit,x,bQgrid,rc_fl)
+    end if
   end subroutine getbQ
 
   subroutine getlQ(lQgrid,ixI^L,ixO^L,qt,w,x)
@@ -381,8 +410,8 @@ contains
       yd2 = heaty_right(tloc+1)*(1.0-tres)+heaty_right(tloc+2)*tres
       xd3 = heatx_center(tloc+1)*(1.0-tres)+heatx_center(tloc+2)*tres
       yd3 = heaty_center(tloc+1)*(1.0-tres)+heaty_center(tloc+2)*tres
-      factors(ixO^S) = dexp(-(x(ixO^S,1)-xd1)**2/sigma**2-(x(ixO^S,2)-yd1)**2/sigma**2)+&
-                      dexp(-(x(ixO^S,1)-xd2)**2/sigma**2-(x(ixO^S,2)-yd2)**2/sigma**2)
+      ! factors(ixO^S) = dexp(-(x(ixO^S,1)-xd1)**2/sigma**2-(x(ixO^S,2)-yd1)**2/sigma**2)+&
+      !                 dexp(-(x(ixO^S,1)-xd2)**2/sigma**2-(x(ixO^S,2)-yd2)**2/sigma**2)
       factors(ixO^S) = factors(ixO^S)+dexp(-(x(ixO^S,1)-xd3)**2/sigma**2-(x(ixO^S,2)-yd3)**2/sigma**2)
     end if
 
@@ -447,10 +476,27 @@ contains
     double precision, dimension(ixI^S,1:ndim), intent(in) :: x
     integer, intent(inout) :: refine,coarsen
 
-    if(any(abs(x(ixO^S,ndim)) .lt. htra)) then
-      refine=1
-      coarsen=-1
+    integer :: i
+    refine=-1
+    coarsen=-1
+
+    if (npoints > 0) then
+      do i=1,npoints
+        if (pos(1,i) >= minval(x(ixO^S,1)) .and. pos(1,i) <= maxval(x(ixO^S,1)) .and. &
+            pos(2,i) >= minval(x(ixO^S,2)+1.d0) .and. pos(2,i) <= maxval(x(ixO^S,2)+1.d0)) then
+              if ((pos(1,i)>=-6.d0) .and. (pos(1,i)<=-4.7d0) .and. pos(2,i) <=2.d0) then
+                refine=1
+                coarsen=-1
+                exit
+              else if (level < 5) then
+                refine=1
+                coarsen=-1
+                exit
+              end if
+        end if
+      end do
     end if
+
 
   end subroutine special_refine_grid
 
@@ -513,5 +559,19 @@ contains
 
     end if
   end subroutine special_analysis
+
+  subroutine read_csv(npoints, pos, ifile)
+    character(len=std_len), intent(in) :: ifile
+    integer, intent(in) :: npoints
+    double precision, intent(out) :: pos(3, npoints)
+    integer :: iunit, i, ierr
+    character(len=std_len) :: line
+    double precision :: x, y, z
+
+    iunit = 10
+    open(unit=iunit, file=ifile, status='old', action='read')
+    read(iunit, *, end=100) pos(:,:)
+    100 close(iunit)
+  end subroutine read_csv
 
 end module mod_usr
