@@ -320,7 +320,6 @@ contains
     factors=zero
     al=two*asym/(1.0+asym)
     ar=two*1.0/(1.0+asym)
-    if(rad-zh+z_cir<0) call mpistop("error in getlQ")
     xr=-2.9
     xl=-7.5
     yr=zero

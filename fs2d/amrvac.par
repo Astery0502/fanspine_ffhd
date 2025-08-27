@@ -1,5 +1,5 @@
  &filelist
-        base_filename='data/extres'
+        base_filename='data/fs2d'
         saveprim=.true.
         autoconvert=f
         convert_type='vtuBCCmpi'
@@ -40,7 +40,7 @@
  /
 
  &meshlist
-        refine_max_level=7
+        refine_max_level=8
         block_nx1=20
         block_nx2=20
         domain_nx1=240
@@ -60,7 +60,7 @@
 
  &ffhd_list
         ffhd_hyperbolic_thermal_conduction=T
-        ffhd_radiative_cooling=F
+        ffhd_radiative_cooling=T
         ffhd_gravity=T
         B0field=.true.
  /
@@ -92,15 +92,15 @@
         Qgama=-0.5d0
         bQ0=0.d0
 
-        trelax=100.d0
-        tstop=250.d0
+        trelax=0.d0
+        tstop=100.d0
         lQ=1.d-1
 
         htra=0.3d0 ! height of transition top
         asym=1.0d0
         xr=-3.0d0
         xl=-7.4d0
-        sigma=0.1d0 ! local heating source size
+        sigma=0.02d0 ! local heating source size
 
         ! make the poles 1.0 lower
         dh = 5.4d0
@@ -110,8 +110,10 @@
         xv = -5.d0
 
         write_analysis=f
-        !npoints=72680
+        !npoints=63920
         npoints=0
-        csvfile='data/lines_points.csv'
-        !csvfile='/data/leuven/377/vsc37715/fs_ffhd/lines_points.csv'
+        !csvfile='data/lines_points.csv'
+        !heatfile='data/cheat.csv'
+        csvfile='/data/leuven/377/vsc37715/fs_ffhd/lines_points.csv'
+        heatfile='/data/leuven/377/vsc37715/fs_ffhd/cheat.csv'
  /
