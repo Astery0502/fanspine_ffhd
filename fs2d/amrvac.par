@@ -1,7 +1,7 @@
  &filelist
-        base_filename='data/fs2d'
+        base_filename='data/tilt'
         saveprim=.true.
-        autoconvert=f
+        autoconvert=t
         convert_type='vtuBCCmpi'
         nwauxio=0
         slice_type='dat'
@@ -19,13 +19,13 @@
 
  &stoplist
         dtmin=1.d-7
-        time_max=50.d0
+        time_max=300.d0
  /
 
  &methodlist
         time_stepper='threestep'
         flux_scheme=20*'hll'
-        limiter=20*'vanleer'
+        limiter=20*'weno5'
         check_small_values=.true.
  /
 
@@ -40,16 +40,17 @@
  /
 
  &meshlist
-        refine_max_level=8
-        block_nx1=20
-        block_nx2=20
-        domain_nx1=240
-        domain_nx2=80
-        xprobmin1=-7.5d0
-        xprobmax1=-3d0
+        refine_max_level=1
+        itfixgrid=0
+        block_nx1=32
+        block_nx2=32
+        domain_nx1=960
+        domain_nx2=480
+        xprobmin1=-8d0
+        xprobmax1=4d0
         xprobmin2=0.d0
-        xprobmax2=1.5d0
-        ditregrid=100000
+        xprobmax2=6.d0
+        ditregrid=10000
  /
 
  &paramlist
@@ -90,30 +91,29 @@
         ! background heating
         Qalfa=2.5d0
         Qgama=-0.5d0
-        bQ0=0.d0
+        bQ0=5.d-3
 
-        trelax=0.d0
-        tstop=100.d0
+        trelax=50.d0
+        tstop=300.d0
         lQ=1.d-1
 
         htra=0.3d0 ! height of transition top
-        asym=1.0d0
-        xr=-3.0d0
-        xl=-7.4d0
+        asym=0.5d0
+        xr=2.7d0
+        xl=-3.92d0
         sigma=0.02d0 ! local heating source size
 
-        ! make the poles 1.0 lower
-        dh = 5.4d0
+        ! make the poles 1.2 lower
+        dh = 4.d0
         Bh = 8.d0
-        dv = 2.d0
-        Bv = 25.d0
-        xv = -5.d0
+        dv = 1.d0
+        Bv = 50.d0
+        xv = -4.d0
+        dp = 0.d0
 
         write_analysis=f
-        !npoints=63920
-        npoints=0
         !csvfile='data/lines_points.csv'
         !heatfile='data/cheat.csv'
-        csvfile='/data/leuven/377/vsc37715/fs_ffhd/lines_points.csv'
-        heatfile='/data/leuven/377/vsc37715/fs_ffhd/cheat.csv'
+        !csvfile='/data/leuven/377/vsc37715/fs_ffhd/lines_points.csv'
+        !heatfile='/data/leuven/377/vsc37715/fs_ffhd/cheat.csv'
  /

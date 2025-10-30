@@ -5,7 +5,7 @@ module mod_usr
   double precision :: usr_grav,trelax,tstop
   double precision :: heatunit,gzone,SRadius,dya
   double precision, allocatable :: pa(:),ra(:)
-  integer, parameter :: jmax=10000
+  integer, parameter :: jmax=20000
 
   double precision :: lQ,lQ0,sigma,asym
 
@@ -16,7 +16,7 @@ module mod_usr
   !> parameters for modified output
   integer :: i_Te,i_b1,i_b2,i_ciso
   !> parameters for fan-spine field in wyper2016
-  double precision :: dh,Bh,dv,Bv,xv,cv,ch
+  double precision :: dh,Bh,dv,Bv,xv,cv,ch,dp
   !> parameters for Btot as extra variable
   integer :: Btot_
   !> parameters for analysis
@@ -37,9 +37,9 @@ contains
     namelist /usr_list/ Qalfa,Qgama,bQ0,& !> for background heating
                         trelax,tstop,lQ,& !> for localized heating (temporal profile)
                         htra,asym,xr,xl,sigma,& !> for localized heating (spaitial profile)
-                        dh,Bh,dv,Bv,xv,& !> for fan-spine field in wyper2016
+                        dh,Bh,dv,Bv,xv,dp,& !> for fan-spine field in wyper2016
                         write_analysis,& !> whether to write down the cooling curve
-                        npoints,csvfile,& !> number of points for refinement
+                        csvfile,& !> number of points for refinement
                         heatfile !> lQ heat points
 
 
@@ -66,7 +66,7 @@ contains
     usr_set_B0          => specialset_B0
     usr_modify_output   => set_output_vars
 
-    usr_write_analysis  => special_analysis
+    ! usr_write_analysis  => special_analysis
     ! usr_process_global  => special_global
     ! usr_set_field_w     => special_field_w
     call usr_params_read(par_files)
@@ -89,19 +89,21 @@ contains
 
     lQ0=lQ/heatunit
 
+    dh = dh + dp
+    dv = dv + dp
+
     ! for fan-spine field use in wyper2016a_field
-    cv = (Bv*(dv-1.d0)**3.d0)*half
-    ch = (Bh*(dh-1.d0)**3.d0)*half
+    cv = (Bv*(dv-dp)**3.d0)*half
+    ch = (Bh*(dh-dp)**3.d0)*half
     call inithdstatic
 
     ! initialize possible points for special amr
-    if (npoints > 0) then
-      allocate(pos(3, npoints))
-      call read_csv(npoints, pos, csvfile)
-    end if
-    if (heatfile /= '') then
-      call read_csv1(heatfile)
-    end if
+    ! if (csvfile /= '') then
+    !   call read_csv(csvfile)
+    ! end if
+    ! if (heatfile /= '') then
+    !   call read_csv1(heatfile)
+    ! end if
   end subroutine initglobaldata_usr
 
   subroutine inithdstatic
@@ -317,7 +319,7 @@ contains
     ar=two*1.0/(1.0+asym)
 
     !> time profile for localized heating (relax->ramp->peak->ramp->relax; ramp is 500s)
-    tramp=500.d0/unit_time !< time for localized heating to increase from 0 to 1, about 6 ta
+    tramp=300.d0/unit_time !< time for localized heating to increase from 0 to 1, about 6 ta
     theat=qt-trelax
     tr=zero
     if (theat .lt. zero) then
@@ -332,20 +334,20 @@ contains
 
     factors(ixO^S) = zero
 
-    if ((theat > 0) .and. (theat < tstop-trelax)) then
-      tloc = floor(theat/(300.d0/unit_time)) ! about five minutes?
-      do ipoint=1,10
-        tres = (theat-300.d0/unit_time*dble(tloc))/(300.d0/unit_time)
-        xd3 = poslq(1,tloc+ipoint)*(1.0-tres)+poslq(1,tloc+ipoint+1)*tres
-        yd3 = poslq(2,tloc+ipoint)*(1.0-tres)+poslq(2,tloc+ipoint+1)*tres
-        factors(ixO^S) = factors(ixO^S)+dexp(-(x(ixO^S,1)-xd3)**2/sigma**2-(x(ixO^S,2)-yd3)**2/sigma**2)
-      end do
-    end if
+    ! if ((theat > 0) .and. (theat < tstop-trelax)) then
+    !   tloc = floor(theat/(300.d0/unit_time)) ! about five minutes?
+    !   do ipoint=1,100
+    !     !tres = (theat-300.d0/unit_time*dble(tloc))/(300.d0/unit_time)
+    !     xd3 = poslq(1,tloc*100+ipoint)
+    !     yd3 = poslq(2,tloc*100+ipoint)
+    !     factors(ixO^S) = factors(ixO^S)+dexp(-(x(ixO^S,1)-xd3)**2/sigma**2-(x(ixO^S,2)-yd3)**2/sigma**2)
+    !   end do
+    ! end if
 
-    lQgrid(ixO^S) = lQ0*tr*factors(ixO^S)
 
-    ! lQgrid(ixO^S) = lQgrid(ixO^S)*(dexp(-(x(ixO^S,1)-xr)**2/sigma**2)*ar+&
-    !                                dexp(-(x(ixO^S,1)-xl)**2/sigma**2)*al)
+    factors(ixO^S) = (dexp(-(x(ixO^S,1)-xr)**2/sigma**2)*ar+&
+                          dexp(-(x(ixO^S,1)-xl)**2/sigma**2)*al)
+    lQgrid(ixO^S) = lQ0*tr*factors(ixO^S)*dexp(-(x(ixO^S,2)-htra/2)**2/sigma**2)
 
     ! if (ffhd_Btot) then
     !   lQgrid(ixO^S)=lQgrid(ixO^S)*(block%wextra(ixO^S,Btot_)/9.25d0)**2
@@ -401,39 +403,36 @@ contains
     double precision, dimension(ixI^S,1:nw), intent(in) :: w
     double precision, dimension(ixI^S,1:ndim), intent(in) :: x
     integer, intent(inout) :: refine,coarsen
+    double precision :: dr
 
     integer :: i
     refine=-1
     coarsen=-1
+    dr = 0.03d0
 
-    if (npoints > 0) then
-      do i=1,npoints
-        if (pos(1,i) >= minval(x(ixO^S,1)) .and. pos(1,i) <= maxval(x(ixO^S,1)) .and. &
-            pos(2,i) >= minval(x(ixO^S,2)) .and. pos(2,i) <= maxval(x(ixO^S,2))) then
-              if ((pos(1,i)>=-5.5d0) .and. (pos(1,i)<=-5.d0) .and. pos(2,i) <=1.1d0) then
-                refine=1
-                coarsen=-1
-                exit
-              else if (level < 5) then
-                refine=1
-                coarsen=-1
-                exit
-              end if
-        end if
-      end do
+    if (qt == 0.d0) then
+      if (npoints > 0) then
+        do i=1,npoints
+          if ((pos(1,i) >= minval(x(ixO^S,1))-dr) .and. (pos(1,i) <= maxval(x(ixO^S,1))+dr) .and. &
+              (pos(2,i) >= minval(x(ixO^S,2))-dr) .and. (pos(2,i) <= maxval(x(ixO^S,2))+dr)) then
+              refine=1
+              coarsen=-1
+          end if
+        end do
     end if
+  end if
 
   end subroutine special_refine_grid
 
   subroutine set_output_vars(ixI^L,ixO^L,qt,w,x)
     use mod_global_parameters
-    use mod_radiative_cooling, only: findL, finddLdt
+    use mod_radiative_cooling, only: findL, finddLdt, getvar_cooling_exact
     ! use mod_ionization
 
     integer, intent(in)             :: ixI^L,ixO^L
     double precision, intent(in)    :: qt, x(ixI^S,1:ndim)
     double precision, intent(inout) :: w(ixI^S,nw)
-    double precision :: wlocal(ixI^S,1:nw),pth(ixI^S)
+    double precision :: wlocal(ixI^S,1:nw),pth(ixI^S), coolrate(ixI^S)
 
     double precision :: tpoint,dLdt,Lpoint,kappa
     integer :: ix^D
@@ -497,14 +496,14 @@ contains
     101 close(iunit)
   end subroutine read_csv1
 
-  subroutine read_csv(npoints, pos, ifile)
+  subroutine read_csv(ifile)
     character(len=std_len), intent(in) :: ifile
-    integer, intent(in) :: npoints
-    double precision, intent(out) :: pos(3, npoints)
     integer :: iunit, i, ierr
 
     iunit = 10
     open(unit=iunit, file=ifile, status='old', action='read')
+    read(iunit, *) npoints
+    allocate(pos(3, npoints))
     read(iunit, *, end=100) pos(:,:)
     100 close(iunit)
   end subroutine read_csv
