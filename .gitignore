@@ -5,3 +5,4 @@ data/*
 !amrvac.par
 !qsl/
 !fs2d/
+!*.ipynb

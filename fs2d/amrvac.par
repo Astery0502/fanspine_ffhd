@@ -95,7 +95,7 @@
 
         trelax=50.d0
         tstop=500.d0
-        lQ=2.d-1
+        lQ=1.d-1
 
         htra=0.3d0 ! height of transition top
         asym=0.5d0

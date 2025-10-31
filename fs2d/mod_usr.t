@@ -408,7 +408,7 @@ contains
     integer :: i
     refine=-1
     coarsen=-1
-    dr = 0.1d0
+    dr = 0.2d0
 
     if (qt == 0.d0) then
       if (csvfile /= '') then
