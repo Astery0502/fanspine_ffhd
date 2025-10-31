@@ -1,7 +1,7 @@
  &filelist
         base_filename='data/tilt'
         saveprim=.true.
-        autoconvert=t
+        autoconvert=f
         convert_type='vtuBCCmpi'
         nwauxio=0
         slice_type='dat'
@@ -19,7 +19,7 @@
 
  &stoplist
         dtmin=1.d-7
-        time_max=300.d0
+        time_max=500.d0
  /
 
  &methodlist
@@ -40,12 +40,12 @@
  /
 
  &meshlist
-        refine_max_level=1
+        refine_max_level=5
         itfixgrid=0
         block_nx1=32
         block_nx2=32
-        domain_nx1=960
-        domain_nx2=480
+        domain_nx1=384
+        domain_nx2=192
         xprobmin1=-8d0
         xprobmax1=4d0
         xprobmin2=0.d0
@@ -94,12 +94,12 @@
         bQ0=5.d-3
 
         trelax=50.d0
-        tstop=300.d0
-        lQ=1.d-1
+        tstop=500.d0
+        lQ=2.d-1
 
         htra=0.3d0 ! height of transition top
         asym=0.5d0
-        xr=2.7d0
+        xr=2.70d0
         xl=-3.92d0
         sigma=0.02d0 ! local heating source size
 
@@ -112,8 +112,8 @@
         dp = 0.d0
 
         write_analysis=f
-        !csvfile='data/lines_points.csv'
+        !csvfile='data/tilt_points.csv'
         !heatfile='data/cheat.csv'
-        !csvfile='/data/leuven/377/vsc37715/fs_ffhd/lines_points.csv'
+        csvfile='/data/leuven/377/vsc37715/fs_ffhd/tilt_points.csv'
         !heatfile='/data/leuven/377/vsc37715/fs_ffhd/cheat.csv'
  /

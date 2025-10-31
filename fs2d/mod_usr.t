@@ -22,8 +22,8 @@ module mod_usr
   !> parameters for analysis
   logical :: write_analysis = .false.
   !> parameters for special amr over specific points
-  character(len=std_len) :: csvfile
-  character(len=std_len) :: heatfile
+  character(len=std_len) :: csvfile=''
+  character(len=std_len) :: heatfile=''
   integer :: npoints=0
   double precision, allocatable :: pos(:,:)
   double precision, allocatable :: poslq(:,:)
@@ -98,9 +98,9 @@ contains
     call inithdstatic
 
     ! initialize possible points for special amr
-    ! if (csvfile /= '') then
-    !   call read_csv(csvfile)
-    ! end if
+    if (csvfile /= '') then
+      call read_csv(csvfile)
+    end if
     ! if (heatfile /= '') then
     !   call read_csv1(heatfile)
     ! end if
@@ -408,11 +408,11 @@ contains
     integer :: i
     refine=-1
     coarsen=-1
-    dr = 0.03d0
+    dr = 0.1d0
 
     if (qt == 0.d0) then
-      if (npoints > 0) then
-        do i=1,npoints
+      if (csvfile /= '') then
+        do i=1,size(pos, 2) ! number of points
           if ((pos(1,i) >= minval(x(ixO^S,1))-dr) .and. (pos(1,i) <= maxval(x(ixO^S,1))+dr) .and. &
               (pos(2,i) >= minval(x(ixO^S,2))-dr) .and. (pos(2,i) <= maxval(x(ixO^S,2))+dr)) then
               refine=1
