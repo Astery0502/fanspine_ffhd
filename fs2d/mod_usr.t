@@ -76,7 +76,7 @@ contains
 
     i_b1 = var_set_extravar("b1", "b1")
     i_b2 = var_set_extravar("b2", "b2")
-    ! i_Te = var_set_extravar("Te", "Te")
+    i_Te = var_set_extravar("Te", "Te")
     ! i_ciso = var_set_extravar("ciso", "ciso")
   end subroutine usr_init
 
@@ -348,7 +348,7 @@ contains
     !                       dexp(-(x(ixO^S,1)-xl)**2/sigma**2)*al)
     ! lQgrid(ixO^S) = lQ0*tr*factors(ixO^S)*dexp(-(x(ixO^S,2)-htra/2)**2/sigma**2)
 
-    lQgrid(ixO^S)=lQgrid(ixO^S)*(block%wextra(ixO^S,Btot_)/4.d0)**2
+    lQgrid(ixO^S)=lQ0*(block%wextra(ixO^S,Btot_)/4.d0)**2*tr
     !   lQgrid(ixO^S)=lQgrid(ixO^S)*((ar-al)/(xr-xl)*(x(ixO^S,1)-xl)+al)
   end subroutine getlQ
 
@@ -400,24 +400,22 @@ contains
     double precision, dimension(ixI^S,1:nw), intent(in) :: w
     double precision, dimension(ixI^S,1:ndim), intent(in) :: x
     integer, intent(inout) :: refine,coarsen
-    double precision :: dr
 
     integer :: i
-    refine=-1
-    coarsen=-1
-    dr = 0.2d0
+    ! refine=-1
+    ! coarsen=-1
 
-    if (qt == 0.d0) then
-      if (csvfile /= '') then
-        do i=1,size(pos, 2) ! number of points
-          if ((pos(1,i) >= minval(x(ixO^S,1))-dr) .and. (pos(1,i) <= maxval(x(ixO^S,1))+dr) .and. &
-              (pos(2,i) >= minval(x(ixO^S,2))-dr) .and. (pos(2,i) <= maxval(x(ixO^S,2))+dr)) then
-              refine=1
-              coarsen=-1
-          end if
-        end do
-    end if
-  end if
+  !   if (qt == 0.d0) then
+  !     if (csvfile /= '') then
+  !       do i=1,size(pos, 2) ! number of points
+  !         if ((pos(1,i) >= minval(x(ixO^S,1))-dr) .and. (pos(1,i) <= maxval(x(ixO^S,1))+dr) .and. &
+  !             (pos(2,i) >= minval(x(ixO^S,2))-dr) .and. (pos(2,i) <= maxval(x(ixO^S,2))+dr)) then
+  !             refine=1
+  !             coarsen=-1
+  !         end if
+  !       end do
+  !   end if
+  ! end if
 
   end subroutine special_refine_grid
 
@@ -436,9 +434,9 @@ contains
     
     w(ixO^S,i_b1)=block%B0(ixO^S,1,0)*block%wextra(ixO^S,Btot_)
     w(ixO^S,i_b2)=block%B0(ixO^S,2,0)*block%wextra(ixO^S,Btot_)
-    ! wlocal(ixI^S,1:nw)=w(ixI^S,1:nw)
-    ! call ffhd_get_pthermal(wlocal,x,ixI^L,ixI^L,pth)
-    ! w(ixO^S,i_Te)=pth(ixO^S)/w(ixO^S,rho_)
+    wlocal(ixI^S,1:nw)=w(ixI^S,1:nw)
+    call ffhd_get_pthermal(wlocal,x,ixI^L,ixI^L,pth)
+    w(ixO^S,i_Te)=pth(ixO^S)/w(ixO^S,rho_)
 
     ! if (ffhd_radiative_cooling) then
     ! kappa=8.d-7*unit_temperature**3.5d0/unit_length/unit_density/unit_velocity**3
@@ -458,7 +456,7 @@ contains
     integer :: iunit
     character(len=80) :: filename
     integer :: ncool
-    double precision, allocatable :: ciso1(:)
+    double precision, alloc4table :: ciso1(:)
 
     if (mype==0 .and. write_analysis) then
 

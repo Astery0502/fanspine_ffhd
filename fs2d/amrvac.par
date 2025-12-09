@@ -1,5 +1,5 @@
  &filelist
-        base_filename='data/bheat'
+        base_filename='data/bheat_refined'
         saveprim=.true.
         autoconvert=f
         convert_type='vtuBCCmpi'
@@ -19,7 +19,7 @@
 
  &stoplist
         dtmin=1.d-7
-        time_max=0.d0
+        time_max=200.d0
  /
 
  &methodlist
@@ -44,10 +44,10 @@
         itfixgrid=0
         block_nx1=32
         block_nx2=32
-        domain_nx1=320
-        domain_nx2=256
-        xprobmin1=-5d0
-        xprobmax1=2.5d0
+        domain_nx1=1280
+        domain_nx2=1024
+        xprobmin1=-6d0
+        xprobmax1=3d0
         xprobmin2=0.d0
         xprobmax2=6.d0
         ditregrid=10000
@@ -64,9 +64,9 @@
         ffhd_radiative_cooling=T
         ffhd_gravity=T
         B0field=.true.
- /
         ffhd_trac=T
         ffhd_trac_type=1
+ /
         ffhd_hypertc=T
         ffhd_ionization=F
         ffhd_Btot=T
@@ -83,7 +83,7 @@
         Tfix=.true.
         tlow=0.006d0
         rad_cut=.true.
-        rad_cut_hgt=0.5d0
+        rad_cut_hgt=0.4d0
         rad_cut_dey=0.1d0
  /
 
