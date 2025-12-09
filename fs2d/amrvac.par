@@ -1,5 +1,5 @@
  &filelist
-        base_filename='data/tilt'
+        base_filename='data/bheat'
         saveprim=.true.
         autoconvert=f
         convert_type='vtuBCCmpi'
@@ -14,18 +14,18 @@
         itsave(1,2)=0
         itsave(1,5)=0
         dtsave_log=0.2d0
-        dtsave_dat=1.d0
+        dtsave_dat=5.d0
  /
 
  &stoplist
         dtmin=1.d-7
-        time_max=500.d0
+        time_max=0.d0
  /
 
  &methodlist
         time_stepper='threestep'
         flux_scheme=20*'hll'
-        limiter=20*'weno5'
+        limiter=20*'cada3'
         check_small_values=.true.
  /
 
@@ -33,21 +33,21 @@
         tvdlfeps_grad=1.0
 
  &boundlist
-        typeboundary_min1 = 4*'cont'
-        typeboundary_max1 = 4*'cont'
-        typeboundary_min2 = 4*'special'
-        typeboundary_max2 = 4*'special'
+        typeboundary_min1 = 3*'cont'
+        typeboundary_max1 = 3*'cont'
+        typeboundary_min2 = 3*'special'
+        typeboundary_max2 = 3*'special'
  /
 
  &meshlist
-        refine_max_level=5
+        refine_max_level=1
         itfixgrid=0
         block_nx1=32
         block_nx2=32
-        domain_nx1=384
-        domain_nx2=192
-        xprobmin1=-8d0
-        xprobmax1=4d0
+        domain_nx1=320
+        domain_nx2=256
+        xprobmin1=-5d0
+        xprobmax1=2.5d0
         xprobmin2=0.d0
         xprobmax2=6.d0
         ditregrid=10000
@@ -103,17 +103,17 @@
         xl=-3.92d0
         sigma=0.02d0 ! local heating source size
 
-        ! make the poles 1.2 lower
-        dh = 4.d0
-        Bh = 8.d0
+        ! aset of parameters for fan-spine field in wyper2016a_field
+        dh = 2.d0
+        Bh = 1.d0
         dv = 1.d0
-        Bv = 50.d0
-        xv = -4.d0
+        Bv = 4.d0
+        xv = -4.5d0
         dp = 0.d0
 
         write_analysis=f
         !csvfile='data/tilt_points.csv'
         !heatfile='data/cheat.csv'
-        csvfile='/data/leuven/377/vsc37715/fs_ffhd/tilt_points.csv'
+        !csvfile='/data/leuven/377/vsc37715/fs_ffhd/tilt_points.csv'
         !heatfile='/data/leuven/377/vsc37715/fs_ffhd/cheat.csv'
  /

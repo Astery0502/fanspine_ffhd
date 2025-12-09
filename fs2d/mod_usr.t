@@ -76,8 +76,8 @@ contains
 
     i_b1 = var_set_extravar("b1", "b1")
     i_b2 = var_set_extravar("b2", "b2")
-    i_Te = var_set_extravar("Te", "Te")
-    i_ciso = var_set_extravar("ciso", "ciso")
+    ! i_Te = var_set_extravar("Te", "Te")
+    ! i_ciso = var_set_extravar("ciso", "ciso")
   end subroutine usr_init
 
   subroutine initglobaldata_usr()
@@ -332,7 +332,7 @@ contains
       tr=(tstop-trelax-theat)/tramp
     endif
 
-    factors(ixO^S) = zero
+    ! factors(ixO^S) = zero
 
     ! if ((theat > 0) .and. (theat < tstop-trelax)) then
     !   tloc = floor(theat/(300.d0/unit_time)) ! about five minutes?
@@ -344,15 +344,12 @@ contains
     !   end do
     ! end if
 
+    ! factors(ixO^S) = (dexp(-(x(ixO^S,1)-xr)**2/sigma**2)*ar+&
+    !                       dexp(-(x(ixO^S,1)-xl)**2/sigma**2)*al)
+    ! lQgrid(ixO^S) = lQ0*tr*factors(ixO^S)*dexp(-(x(ixO^S,2)-htra/2)**2/sigma**2)
 
-    factors(ixO^S) = (dexp(-(x(ixO^S,1)-xr)**2/sigma**2)*ar+&
-                          dexp(-(x(ixO^S,1)-xl)**2/sigma**2)*al)
-    lQgrid(ixO^S) = lQ0*tr*factors(ixO^S)*dexp(-(x(ixO^S,2)-htra/2)**2/sigma**2)
-
-    ! if (ffhd_Btot) then
-    !   lQgrid(ixO^S)=lQgrid(ixO^S)*(block%wextra(ixO^S,Btot_)/9.25d0)**2
+    lQgrid(ixO^S)=lQgrid(ixO^S)*(block%wextra(ixO^S,Btot_)/4.d0)**2
     !   lQgrid(ixO^S)=lQgrid(ixO^S)*((ar-al)/(xr-xl)*(x(ixO^S,1)-xl)+al)
-    ! end if
   end subroutine getlQ
 
   subroutine wyper2016a_field(ixI^L,ixO^L,x,Bvec)
@@ -437,22 +434,21 @@ contains
     double precision :: tpoint,dLdt,Lpoint,kappa
     integer :: ix^D
     
-    kappa=8.d-7*unit_temperature**3.5d0/unit_length/unit_density/unit_velocity**3
-
     w(ixO^S,i_b1)=block%B0(ixO^S,1,0)*block%wextra(ixO^S,Btot_)
     w(ixO^S,i_b2)=block%B0(ixO^S,2,0)*block%wextra(ixO^S,Btot_)
-    wlocal(ixI^S,1:nw)=w(ixI^S,1:nw)
-    call ffhd_get_pthermal(wlocal,x,ixI^L,ixI^L,pth)
-    w(ixO^S,i_Te)=pth(ixO^S)/w(ixO^S,rho_)
+    ! wlocal(ixI^S,1:nw)=w(ixI^S,1:nw)
+    ! call ffhd_get_pthermal(wlocal,x,ixI^L,ixI^L,pth)
+    ! w(ixO^S,i_Te)=pth(ixO^S)/w(ixO^S,rho_)
 
-    if (ffhd_radiative_cooling) then
-      {do ix^DB=ixOmin^DB,ixOmax^DB\}
-      tpoint = w(ix^DB,i_Te)
-      call finddLdt(tpoint, dLdt, rc_fl)
-      call findL(tpoint, Lpoint, rc_fl)
-      w(ix^D,i_ciso)=w(ix^D,rho_)**2*(dLdt-Lpoint/w(ix^D,i_Te))/kappa
-      {end do\}
-    end if
+    ! if (ffhd_radiative_cooling) then
+    ! kappa=8.d-7*unit_temperature**3.5d0/unit_length/unit_density/unit_velocity**3
+    !   {do ix^DB=ixOmin^DB,ixOmax^DB\}
+    !   tpoint = w(ix^DB,i_Te)
+    !   call finddLdt(tpoint, dLdt, rc_fl)
+    !   call findL(tpoint, Lpoint, rc_fl)
+    !   w(ix^D,i_ciso)=w(ix^D,rho_)**2*(dLdt-Lpoint/w(ix^D,i_Te))/kappa
+    !   {end do\}
+    ! end if
 
   end subroutine set_output_vars
 
