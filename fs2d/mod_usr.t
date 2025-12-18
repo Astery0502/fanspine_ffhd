@@ -456,7 +456,7 @@ contains
     integer :: iunit
     character(len=80) :: filename
     integer :: ncool
-    double precision, alloc4table :: ciso1(:)
+    double precision, allocatable :: ciso1(:)
 
     if (mype==0 .and. write_analysis) then
 

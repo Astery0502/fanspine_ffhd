@@ -1,5 +1,5 @@
  &filelist
-        base_filename='data/bheat_refined'
+        base_filename='data/bheat'
         saveprim=.true.
         autoconvert=f
         convert_type='vtuBCCmpi'
@@ -14,20 +14,24 @@
         itsave(1,2)=0
         itsave(1,5)=0
         dtsave_log=0.2d0
-        dtsave_dat=5.d0
+        dtsave_dat=1.d0
  /
 
  &stoplist
         dtmin=1.d-7
-        time_max=200.d0
+        time_max=400.d0
  /
 
  &methodlist
         time_stepper='threestep'
         flux_scheme=20*'hll'
         limiter=20*'cada3'
-        check_small_values=.true.
+        fix_small_values=.true.
+        small_values_method='replace'
+        small_pressure=0.01d0
+        small_density=0.05d0
  /
+        check_small_values=.true.
 
         tvdlfeps_min=0.0
         tvdlfeps_grad=1.0
@@ -44,8 +48,8 @@
         itfixgrid=0
         block_nx1=32
         block_nx2=32
-        domain_nx1=1280
-        domain_nx2=1024
+        domain_nx1=640
+        domain_nx2=512
         xprobmin1=-6d0
         xprobmax1=3d0
         xprobmin2=0.d0
@@ -95,7 +99,7 @@
 
         trelax=50.d0
         tstop=500.d0
-        lQ=1.d-1
+        lQ=2.d-1
 
         htra=0.3d0 ! height of transition top
         asym=0.5d0
